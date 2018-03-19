@@ -8,3 +8,6 @@ logging:
     com:
       github:
         messenger4j: INFO
+
+server:
+  port: 8080
