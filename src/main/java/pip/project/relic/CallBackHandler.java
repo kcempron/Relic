@@ -26,10 +26,6 @@ import java.util.List;
 import java.util.Date;
 import java.util.stream.Collectors;
 
-/**
- * Created by aboullaite on 2017-02-26.
- */
-
 @RestController
 @RequestMapping("/callback")
 public class CallBackHandler {
