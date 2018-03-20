@@ -21,6 +21,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -31,6 +33,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/callback")
+//@Component
 public class CallBackHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(CallBackHandler.class);
@@ -122,8 +125,7 @@ public class CallBackHandler {
             final String senderId = event.getSender().getId();
             final Date timestamp = event.getTimestamp();
 
-            logger.info("Received message '{}' with text '{}' from user '{}' at '{}'",
-                messageId, messageText, senderId, timestamp);
+            database.getReference("users").push().setValueAsync(senderId);
 
             try {
                 switch (messageText.toLowerCase()) {
@@ -131,8 +133,6 @@ public class CallBackHandler {
 
                     case "yo":
                         sendTextMessage(senderId, "Hello, What I can do for you ? Type the word you're looking for");
-                        testStore.put("test", "success!");
-                        database.getReference().setValueAsync(testStore);
                         break;
 
                     case "great":
@@ -377,6 +377,19 @@ public class CallBackHandler {
             handleSendException(e);
         }
     }
+
+//    @Scheduled(cron="0 * * * * *")
+//    private void sendMoodMessage(String recipientId) {
+//        try {
+//            final Recipient recipient = Recipient.newBuilder().recipientId(recipientId).build();
+//            final NotificationType notificationType = NotificationType.REGULAR;
+//            final String metadata = "DEVELOPER_DEFINED_METADATA";
+//
+//            this.sendClient.sendTextMessage(recipient, notificationType, "How are you feeling today?", metadata);
+//        } catch (MessengerApiException | MessengerIOException e) {
+//            handleSendException(e);
+//        }
+//    }
 
     private void handleSendException(Exception e) {
         logger.error("Message could not be sent. An unexpected error occurred.", e);
