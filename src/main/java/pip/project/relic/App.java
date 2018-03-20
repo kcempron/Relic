@@ -1,7 +1,6 @@
 package pip.project.relic;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import com.github.messenger4j.MessengerPlatform;
@@ -34,6 +33,14 @@ public class App {
         return MessengerPlatform.newSendClientBuilder(pageAccessToken).build();
     }
 
+    /**
+     * Initialize Firebase database.
+     *
+     * @param serviceAccountPath Path to Service Account credentials.
+     * @param databaseName Name of Firebase database to connect to.
+     * @return Firebase Instance
+     * @throws IOException
+     */
     @Bean
     public FirebaseDatabase firebaseConnection(@Value("${firebase.serviceAccountPath}") String serviceAccountPath,
                                                @Value("${firebase.databaseName}") String databaseName) throws IOException{
