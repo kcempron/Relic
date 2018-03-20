@@ -10,7 +10,12 @@ import com.github.messenger4j.receive.handlers.*;
 import com.github.messenger4j.send.*;
 import com.github.messenger4j.send.buttons.Button;
 import com.github.messenger4j.send.templates.GenericTemplate;
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -29,6 +34,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Date;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
@@ -131,8 +137,16 @@ public class CallBackHandler {
                 switch (messageText.toLowerCase()) {
 
 
-                    case "yo":
-                        sendTextMessage(senderId, "Hello, What I can do for you ? Type the word you're looking for");
+                    case "new user":
+                        sendTextMessage(senderId, "You're registering as a new user");
+                        if (verifyNewUser(senderId)) {
+                            Map<String, User> userData = new HashMap<>();
+                            userData.put(senderId, new User(senderId));
+                            database.getReference("users").setValueAsync(userData);
+                            sendTextMessage(senderId, "You are now a user!");
+                        } else {
+                            sendTextMessage(senderId, "You're already registered");
+                        }
                         break;
 
                     case "great":
@@ -150,6 +164,23 @@ public class CallBackHandler {
                 handleSendException(e);
             }
         };
+    }
+
+    private boolean verifyNewUser(String userId) {
+        DatabaseReference userReference = database.getReference("users");
+        userReference.equalTo(userId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                System.out.println(dataSnapshot.getKey());
+                System.out.println(dataSnapshot.getValue(String.class));
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+        return true;
     }
 
     private void sendSpringDoc(String recipientId, String keyword) throws MessengerApiException, MessengerIOException, IOException {
