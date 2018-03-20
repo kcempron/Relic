@@ -142,7 +142,8 @@ public class CallBackHandler {
                         if (verifyNewUser(senderId)) {
                             Map<String, User> userData = new HashMap<>();
                             userData.put(senderId, new User(senderId));
-                            database.getReference("users").setValueAsync(userData);
+                            logger.info(userData.toString());
+                            database.getReference("/").child("users").setValueAsync(userData);
                             sendTextMessage(senderId, "You are now a user!");
                         } else {
                             sendTextMessage(senderId, "You're already registered");
