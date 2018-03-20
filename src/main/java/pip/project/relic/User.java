@@ -6,13 +6,18 @@ import java.util.Map;
 
 public class User {
 
-    private String userId;
+    public String userId;
 
-    private Map<Instant, String> mood;
+    public Map<Instant, String> mood;
 
-    public User(String userID) {
+    public User(String userId) {
         this.userId = userId;
         this.mood = new HashMap<>();
+    }
+
+    public User(String userId, Map<Instant, String> mood) {
+        this.userId = userId;
+        this.mood = mood;
     }
 
     public String getUserId() {

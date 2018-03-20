@@ -168,19 +168,6 @@ public class CallBackHandler {
     }
 
     private boolean verifyNewUser(String userId) {
-        DatabaseReference userReference = database.getReference("users");
-        userReference.equalTo(userId).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                System.out.println(dataSnapshot.getKey());
-                System.out.println(dataSnapshot.getValue(String.class));
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
         return true;
     }
 
