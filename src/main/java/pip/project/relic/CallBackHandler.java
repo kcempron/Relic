@@ -24,6 +24,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Date;
 import java.util.stream.Collectors;
@@ -41,6 +42,8 @@ public class CallBackHandler {
     private final MessengerSendClient sendClient;
 
     private final FirebaseDatabase database;
+
+    private final HashMap<String, String> testStore;
 
     /**
      * Constructs the {@code CallBackHandler} and initializes the {@code MessengerReceiveClient}.
@@ -70,6 +73,7 @@ public class CallBackHandler {
             .build();
         this.sendClient = sendClient;
         this.database = database;
+        testStore = new HashMap<>();
     }
 
     /**
@@ -127,6 +131,8 @@ public class CallBackHandler {
 
                     case "yo":
                         sendTextMessage(senderId, "Hello, What I can do for you ? Type the word you're looking for");
+                        testStore.put("test", "success!");
+                        database.getReference().setValueAsync(testStore);
                         break;
 
                     case "great":
