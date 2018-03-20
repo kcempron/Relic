@@ -8,3 +8,7 @@ logging:
     com:
       github:
         messenger4j: INFO
+
+firebase:
+  serviceAccountPath: "src/main/resources/relic-f93a1-firebase-adminsdk-pwaoe-a6eaa2c983.json"
+  databaseName: "https://relic-f93a1.firebaseio.com/"
