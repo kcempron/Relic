@@ -155,35 +155,21 @@ public class CallBackHandler {
     }
 
     private void verifyNewUser(String userId) {
-        database.getReference("users").orderByKey().equalTo(userId).addChildEventListener(new ChildEventListener() {
+        database.getReference("users").child(userId).addListenerForSingleValueEvent(new ValueEventListener() {
+
             @Override
-            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                if (dataSnapshot.getKey().equalsIgnoreCase(userId)) {
-                    sendTextMessage(userId, "You're already registered");
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.getValue() != null) {
+                    sendTextMessage(userId, "You've already registered as a user!");
                 } else {
                     database.getReference("users").child(userId).setValueAsync(new User(userId));
-                    sendTextMessage(userId, "You are now a user!");
+                    sendTextMessage(userId, "Welcome new user!");
                 }
             }
 
             @Override
-            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-
-            }
-
-            @Override
-            public void onChildRemoved(DataSnapshot dataSnapshot) {
-
-            }
-
-            @Override
-            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-
-            }
-
-            @Override
             public void onCancelled(DatabaseError databaseError) {
-
+                //
             }
         });
     }
