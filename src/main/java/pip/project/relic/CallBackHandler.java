@@ -121,7 +121,6 @@ public class CallBackHandler {
             try {
                 switch (messageText.toLowerCase()) {
 
-
                     case "new user":
                         sendTextMessage(senderId, "You're registering as a new user");
                         verifyNewUser(senderId);
