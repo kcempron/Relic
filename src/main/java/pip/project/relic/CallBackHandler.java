@@ -134,12 +134,7 @@ public class CallBackHandler {
 
                     case "new user":
                         sendTextMessage(senderId, "You're registering as a new user");
-                        if (verifyNewUser(senderId)) {
-                            database.getReference("users").child(senderId).setValueAsync(new User(senderId));
-                            sendTextMessage(senderId, "You are now a user!");
-                        } else {
-                            sendTextMessage(senderId, "You're already registered");
-                        }
+                        verifyNewUser(senderId);
                         break;
 
                     case "great":
@@ -159,14 +154,16 @@ public class CallBackHandler {
         };
     }
 
-    private boolean verifyNewUser(String userId) {
-        final boolean[] verified = {true};
-
+    private void verifyNewUser(String userId) {
         database.getReference("users").orderByKey().equalTo(userId).addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                verified[0] = false;
-                logger.info("USER KEY INFO: " + dataSnapshot.getKey());
+                if (dataSnapshot.getKey().equalsIgnoreCase(userId)) {
+                    sendTextMessage(userId, "You're already registered");
+                } else {
+                    database.getReference("users").child(userId).setValueAsync(new User(userId));
+                    sendTextMessage(userId, "You are now a user!");
+                }
             }
 
             @Override
@@ -189,7 +186,6 @@ public class CallBackHandler {
 
             }
         });
-        return verified[0];
     }
 
     private void sendSpringDoc(String recipientId, String keyword) throws MessengerApiException, MessengerIOException, IOException {
