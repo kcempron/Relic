@@ -128,8 +128,6 @@ public class CallBackHandler {
             final String senderId = event.getSender().getId();
             final Date timestamp = event.getTimestamp();
 
-            database.getReference("users").push().setValueAsync(senderId);
-
             try {
                 switch (messageText.toLowerCase()) {
 
@@ -164,7 +162,7 @@ public class CallBackHandler {
     private boolean verifyNewUser(String userId) {
         final boolean[] verified = {true};
 
-        database.getReference("users").orderByKey().addChildEventListener(new ChildEventListener() {
+        database.getReference("users").orderByKey().equalTo(userId).addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
                 verified[0] = false;
