@@ -1,4 +1,4 @@
-package pip.project.relic;
+package pip.project.relic.components;
 
 import java.time.Instant;
 import java.util.HashMap;

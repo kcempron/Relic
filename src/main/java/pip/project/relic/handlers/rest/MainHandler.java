@@ -1,4 +1,4 @@
-package pip.project.relic;
+package pip.project.relic.handlers.rest;
 
 import org.springframework.boot.autoconfigure.web.ErrorController;
 import org.springframework.web.bind.annotation.RequestMapping;
