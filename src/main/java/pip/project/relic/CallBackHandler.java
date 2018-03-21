@@ -52,8 +52,6 @@ public class CallBackHandler {
 
     private final FirebaseDatabase database;
 
-    private final HashMap<String, String> testStore;
-
     /**
      * Constructs the {@code CallBackHandler} and initializes the {@code MessengerReceiveClient}.
      *
@@ -82,7 +80,6 @@ public class CallBackHandler {
             .build();
         this.sendClient = sendClient;
         this.database = database;
-        testStore = new HashMap<>();
     }
 
     /**
@@ -140,10 +137,9 @@ public class CallBackHandler {
                     case "new user":
                         sendTextMessage(senderId, "You're registering as a new user");
                         if (verifyNewUser(senderId)) {
-                            Map<String, User> userData = new HashMap<>();
+                            Map<String, Object> userData = new HashMap<>();
                             userData.put(senderId, new User(senderId));
-                            logger.info(userData.toString());
-                            database.getReference("/").child("users").setValueAsync(userData);
+                            database.getReference("users").updateChildrenAsync(userData);
                             sendTextMessage(senderId, "You are now a user!");
                         } else {
                             sendTextMessage(senderId, "You're already registered");
@@ -168,7 +164,21 @@ public class CallBackHandler {
     }
 
     private boolean verifyNewUser(String userId) {
-        return true;
+        final boolean[] verified = {false};
+
+        database.getReference("users").equalTo(userId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                logger.info(dataSnapshot.getValue(String.class));
+                verified[0] = true;
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                //
+            }
+        });
+        return verified[0];
     }
 
     private void sendSpringDoc(String recipientId, String keyword) throws MessengerApiException, MessengerIOException, IOException {
