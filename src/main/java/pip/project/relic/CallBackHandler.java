@@ -8,18 +8,12 @@ import com.github.messenger4j.receive.MessengerReceiveClient;
 import com.github.messenger4j.receive.events.AccountLinkingEvent;
 import com.github.messenger4j.receive.handlers.*;
 import com.github.messenger4j.send.*;
-import com.github.messenger4j.send.buttons.Button;
-import com.github.messenger4j.send.templates.GenericTemplate;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,15 +21,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Date;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/callback")
@@ -174,70 +163,9 @@ public class CallBackHandler {
         });
     }
 
-    private void sendSpringDoc(String recipientId, String keyword) throws MessengerApiException, MessengerIOException, IOException {
-
-        Document doc = Jsoup.connect(("https://spring.io/search?q=").concat(keyword)).get();
-        String countResult = doc.select("div.search-results--count").first().ownText();
-        Elements searchResult = doc.select("section.search-result");
-        List<SearchResult> searchResults = searchResult.stream().map(element ->
-            new SearchResult(element.select("a").first().ownText(),
-                element.select("a").first().absUrl("href"),
-                element.select("div.search-result--subtitle").first().ownText(),
-                element.select("div.search-result--summary").first().ownText())
-        ).limit(3).collect(Collectors.toList());
-
-        final List<Button> firstLink = Button.newListBuilder()
-            .addUrlButton("Open Link", searchResults.get(0).getLink()).toList()
-            .build();
-        final List<Button> secondLink = Button.newListBuilder()
-            .addUrlButton("Open Link", searchResults.get(1).getLink()).toList()
-            .build();
-        final List<Button> thirdtLink = Button.newListBuilder()
-            .addUrlButton("Open Link", searchResults.get(2).getLink()).toList()
-            .build();
-        final List<Button> searchLink = Button.newListBuilder()
-            .addUrlButton("Open Link", ("https://spring.io/search?q=").concat(keyword)).toList()
-            .build();
-
-
-
-        final GenericTemplate genericTemplate = GenericTemplate.newBuilder()
-            .addElements()
-            .addElement(searchResults.get(0).getTitle())
-            .subtitle(searchResults.get(0).getSubtitle())
-            .itemUrl(searchResults.get(0).getLink())
-            .imageUrl("https://upload.wikimedia.org/wikipedia/en/2/20/Pivotal_Java_Spring_Logo.png")
-            .buttons(firstLink)
-            .toList()
-            .addElement(searchResults.get(1).getTitle())
-            .subtitle(searchResults.get(1).getSubtitle())
-            .itemUrl(searchResults.get(1).getLink())
-            .imageUrl("https://upload.wikimedia.org/wikipedia/en/2/20/Pivotal_Java_Spring_Logo.png")
-            .buttons(secondLink)
-            .toList()
-            .addElement(searchResults.get(2).getTitle())
-            .subtitle(searchResults.get(2).getSubtitle())
-            .itemUrl(searchResults.get(2).getLink())
-            .imageUrl("https://upload.wikimedia.org/wikipedia/en/2/20/Pivotal_Java_Spring_Logo.png")
-            .buttons(thirdtLink)
-            .toList()
-            .addElement("All results " + countResult)
-            .subtitle("Spring Search Result")
-            .itemUrl(("https://spring.io/search?q=").concat(keyword))
-            .imageUrl("https://upload.wikimedia.org/wikipedia/en/2/20/Pivotal_Java_Spring_Logo.png")
-            .buttons(searchLink)
-            .toList()
-            .done()
-            .build();
-
-        this.sendClient.sendTemplate(recipientId, genericTemplate);
-    }
-
     private void sendGifMessage(String recipientId, String gif) throws MessengerApiException, MessengerIOException {
         this.sendClient.sendImageAttachment(recipientId, gif);
     }
-
-
 
     private void sendQuickReply(String recipientId) throws MessengerApiException, MessengerIOException {
         final List<QuickReply> quickReplies = QuickReply.newListBuilder()
@@ -400,18 +328,43 @@ public class CallBackHandler {
         }
     }
 
-//    @Scheduled(cron="0 * * * * *")
-//    private void sendMoodMessage(String recipientId) {
-//        try {
-//            final Recipient recipient = Recipient.newBuilder().recipientId(recipientId).build();
-//            final NotificationType notificationType = NotificationType.REGULAR;
-//            final String metadata = "DEVELOPER_DEFINED_METADATA";
-//
-//            this.sendClient.sendTextMessage(recipient, notificationType, "How are you feeling today?", metadata);
-//        } catch (MessengerApiException | MessengerIOException e) {
-//            handleSendException(e);
-//        }
-//    }
+    @Scheduled(cron="0 * * * * *")
+    private void sendMoodMessage() {
+        database.getReference("users").orderByKey().addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                try {
+                    final Recipient recipient = Recipient.newBuilder().recipientId(dataSnapshot.getKey()).build();
+                    final NotificationType notificationType = NotificationType.REGULAR;
+                    final String metadata = "DEVELOPER_DEFINED_METADATA";
+
+                    sendClient.sendTextMessage(recipient, notificationType, "How are you feeling today?", metadata);
+                } catch (MessengerApiException | MessengerIOException e) {
+                    handleSendException(e);
+                }
+            }
+
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+
+            }
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
 
     private void handleSendException(Exception e) {
         logger.error("Message could not be sent. An unexpected error occurred.", e);
