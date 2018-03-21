@@ -137,9 +137,7 @@ public class CallBackHandler {
                     case "new user":
                         sendTextMessage(senderId, "You're registering as a new user");
                         if (verifyNewUser(senderId)) {
-                            Map<String, Object> userData = new HashMap<>();
-                            userData.put(senderId, new User(senderId));
-                            database.getReference("users").updateChildrenAsync(userData);
+                            database.getReference("users").child(senderId).setValueAsync(new User(senderId));
                             sendTextMessage(senderId, "You are now a user!");
                         } else {
                             sendTextMessage(senderId, "You're already registered");
@@ -166,16 +164,31 @@ public class CallBackHandler {
     private boolean verifyNewUser(String userId) {
         final boolean[] verified = {false};
 
-        database.getReference("users").equalTo(userId).addListenerForSingleValueEvent(new ValueEventListener() {
+        database.getReference("users").equalTo(userId).addChildEventListener(new ChildEventListener() {
             @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                logger.info(dataSnapshot.getValue(String.class));
+            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
                 verified[0] = true;
+                logger.info("USER KEY INFO: " + dataSnapshot.getKey());
+            }
+
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+
+            }
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-                //
+
             }
         });
         return verified[0];
