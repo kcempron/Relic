@@ -162,12 +162,12 @@ public class CallBackHandler {
     }
 
     private boolean verifyNewUser(String userId) {
-        final boolean[] verified = {false};
+        final boolean[] verified = {true};
 
-        database.getReference("users").equalTo(userId).addChildEventListener(new ChildEventListener() {
+        database.getReference("users").orderByKey().addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                verified[0] = true;
+                verified[0] = false;
                 logger.info("USER KEY INFO: " + dataSnapshot.getKey());
             }
 
