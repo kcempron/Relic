@@ -30,7 +30,6 @@ import java.util.Date;
 @RestController
 @RequestMapping("/callback")
 @Component
-//@Component
 public class CallBackHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(CallBackHandler.class);
@@ -330,7 +329,7 @@ public class CallBackHandler {
         }
     }
 
-    @Scheduled(cron="0 * * * * *")
+    @Scheduled(cron="0 0 7,11,14,17,20 * * *")
     private void sendMoodMessage() {
         database.getReference("users").orderByKey().addChildEventListener(new ChildEventListener() {
             @Override
