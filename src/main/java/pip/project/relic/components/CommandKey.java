@@ -1,4 +1,4 @@
-package pip.project.relic.utils;
+package pip.project.relic.components;
 
 import java.util.HashMap;
 import java.util.Map;

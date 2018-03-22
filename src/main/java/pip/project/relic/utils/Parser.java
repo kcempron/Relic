@@ -7,6 +7,9 @@ import java.util.stream.Collectors;
 
 import com.google.common.base.Preconditions;
 
+import pip.project.relic.components.Command;
+import pip.project.relic.components.CommandKey;
+
 public final class Parser {
 
     private Parser() {

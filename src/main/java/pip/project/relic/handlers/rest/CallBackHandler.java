@@ -7,8 +7,6 @@ import com.github.messenger4j.exceptions.MessengerVerificationException;
 import com.github.messenger4j.receive.MessengerReceiveClient;
 import com.github.messenger4j.receive.events.AccountLinkingEvent;
 import com.github.messenger4j.receive.handlers.*;
-import com.github.messenger4j.send.*;
-import com.google.firebase.database.FirebaseDatabase;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,9 +18,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Date;
-import java.util.Map;
 
-import pip.project.relic.utils.Command;
+import pip.project.relic.components.Command;
 import pip.project.relic.utils.Parser;
 import pip.project.relic.utils.Sender;
 import pip.project.relic.handlers.system.AuthHandler;

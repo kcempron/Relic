@@ -4,6 +4,9 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
+import pip.project.relic.components.Command;
+import pip.project.relic.components.CommandKey;
+
 public class ParserTest {
 
     private final String dummyMessage = "This is a dummy message.";
