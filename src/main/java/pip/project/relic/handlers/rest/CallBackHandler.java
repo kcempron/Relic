@@ -47,7 +47,6 @@ public class CallBackHandler {
      * @param appSecret   the {@code Application Secret}
      * @param verifyToken the {@code Verification Token} that has been provided by you during the setup of the {@code
      *                    Webhook}
-     * @param sendClient  the initialized {@code MessengerSendClient}
      */
     @Autowired
     public CallBackHandler(@Value("${messenger4j.appSecret}") final String appSecret,
