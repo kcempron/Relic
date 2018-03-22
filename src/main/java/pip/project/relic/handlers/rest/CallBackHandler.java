@@ -1,4 +1,4 @@
-package pip.project.relic;
+package pip.project.relic.handlers.rest;
 
 import com.github.messenger4j.MessengerPlatform;
 import com.github.messenger4j.exceptions.MessengerApiException;
@@ -8,11 +8,7 @@ import com.github.messenger4j.receive.MessengerReceiveClient;
 import com.github.messenger4j.receive.events.AccountLinkingEvent;
 import com.github.messenger4j.receive.handlers.*;
 import com.github.messenger4j.send.*;
-import com.google.firebase.database.ChildEventListener;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,16 +16,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Date;
+import java.util.Map;
+
+import pip.project.relic.utils.Command;
+import pip.project.relic.utils.Parser;
+import pip.project.relic.utils.Sender;
+import pip.project.relic.handlers.system.AuthHandler;
 
 @RestController
 @RequestMapping("/callback")
-@Component
 public class CallBackHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(CallBackHandler.class);
@@ -38,9 +37,9 @@ public class CallBackHandler {
     public static final String NOT_GOOD_ACTION = "DEVELOPER_DEFINED_PAYLOAD_FOR_NOT_GOOD_ACTION";
 
     private final MessengerReceiveClient receiveClient;
-    private final MessengerSendClient sendClient;
 
-    private final FirebaseDatabase database;
+    private final Sender sender;
+    private final AuthHandler authHandler;
 
     /**
      * Constructs the {@code CallBackHandler} and initializes the {@code MessengerReceiveClient}.
@@ -48,13 +47,12 @@ public class CallBackHandler {
      * @param appSecret   the {@code Application Secret}
      * @param verifyToken the {@code Verification Token} that has been provided by you during the setup of the {@code
      *                    Webhook}
-     * @param sendClient  the initialized {@code MessengerSendClient}
      */
     @Autowired
     public CallBackHandler(@Value("${messenger4j.appSecret}") final String appSecret,
                            @Value("${messenger4j.verifyToken}") final String verifyToken,
-                           final MessengerSendClient sendClient,
-                           final FirebaseDatabase database) {
+                           final Sender sender,
+                           final AuthHandler authHandler) {
 
         logger.debug("Initializing MessengerReceiveClient - appSecret: {} | verifyToken: {}", appSecret, verifyToken);
         this.receiveClient = MessengerPlatform.newReceiveClientBuilder(appSecret, verifyToken)
@@ -68,8 +66,8 @@ public class CallBackHandler {
             .onMessageReadEvent(newMessageReadEventHandler())
             .fallbackEventHandler(newFallbackEventHandler())
             .build();
-        this.sendClient = sendClient;
-        this.database = database;
+        this.sender = sender;
+        this.authHandler = authHandler;
     }
 
     /**
@@ -118,74 +116,39 @@ public class CallBackHandler {
             final String senderId = event.getSender().getId();
             final Date timestamp = event.getTimestamp();
 
-            try {
-                switch (messageText.toLowerCase()) {
+            Command command = Parser.parseCommand(messageText);
 
-                    case "new user":
-                        sendTextMessage(senderId, "You're registering as a new user");
-                        verifyNewUser(senderId);
+            try {
+                switch (command.getCommandKey()) {
+
+                    case NEWUSER:
+                        sender.sendTextMessage(senderId, "You're registering as a new user");
+                        authHandler.verifyNewUser(senderId);
                         break;
 
-                    case "great":
-                        sendTextMessage(senderId, "You're welcome :) keep rocking");
+                    case RESETUSER:
+                        sender.sendTextMessage(senderId, "You're welcome :) keep rocking");
+                        break;
+
+                    case MOOD:
+                        sender.sendTextMessage(senderId, "You're trying to send a mood message.");
+                        break;
+
+                    case THOUGHT:
+                        sender.sendTextMessage(senderId, "You're trying to send a thought message.");
                         break;
 
                     default:
-                        sendReadReceipt(senderId);
-                        sendTypingOn(senderId);
-                        sendTextMessage(senderId, "don't say that.");
-                        sendQuickReply(senderId);
-                        sendTypingOff(senderId);
+                        sender.sendReadReceipt(senderId);
+                        sender.sendTypingOn(senderId);
+                        sender.sendTextMessage(senderId, "don't say that.");
+                        sender.sendQuickReply(senderId);
+                        sender.sendTypingOff(senderId);
                 }
             } catch (MessengerApiException | MessengerIOException e) {
                 handleSendException(e);
             }
         };
-    }
-
-    private void verifyNewUser(String userId) {
-        database.getReference("users").child(userId).addListenerForSingleValueEvent(new ValueEventListener() {
-
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                if (dataSnapshot.getValue() != null) {
-                    sendTextMessage(userId, "You've already registered as a user!");
-                } else {
-                    database.getReference("users").child(userId).setValueAsync(new User(userId));
-                    sendTextMessage(userId, "Welcome new user!");
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                //
-            }
-        });
-    }
-
-    private void sendGifMessage(String recipientId, String gif) throws MessengerApiException, MessengerIOException {
-        this.sendClient.sendImageAttachment(recipientId, gif);
-    }
-
-    private void sendQuickReply(String recipientId) throws MessengerApiException, MessengerIOException {
-        final List<QuickReply> quickReplies = QuickReply.newListBuilder()
-            .addTextQuickReply("Looks good", GOOD_ACTION).toList()
-            .addTextQuickReply("Nope!", NOT_GOOD_ACTION).toList()
-            .build();
-
-        this.sendClient.sendTextMessage(recipientId, "Was this helpful?!", quickReplies);
-    }
-
-    private void sendReadReceipt(String recipientId) throws MessengerApiException, MessengerIOException {
-        this.sendClient.sendSenderAction(recipientId, SenderAction.MARK_SEEN);
-    }
-
-    private void sendTypingOn(String recipientId) throws MessengerApiException, MessengerIOException {
-        this.sendClient.sendSenderAction(recipientId, SenderAction.TYPING_ON);
-    }
-
-    private void sendTypingOff(String recipientId) throws MessengerApiException, MessengerIOException {
-        this.sendClient.sendSenderAction(recipientId, SenderAction.TYPING_OFF);
     }
 
     private QuickReplyMessageEventHandler newQuickReplyMessageEventHandler() {
@@ -201,16 +164,16 @@ public class CallBackHandler {
 
             try {
                 if(quickReplyPayload.equals(GOOD_ACTION))
-                    sendGifMessage(senderId, "https://media.giphy.com/media/3oz8xPxTUeebQ8pL1e/giphy.gif");
+                    sender.sendGifMessage(senderId, "https://media.giphy.com/media/3oz8xPxTUeebQ8pL1e/giphy.gif");
                 else
-                    sendGifMessage(senderId, "https://media.giphy.com/media/26ybx7nkZXtBkEYko/giphy.gif");
+                    sender.sendGifMessage(senderId, "https://media.giphy.com/media/26ybx7nkZXtBkEYko/giphy.gif");
             } catch (MessengerApiException e) {
                 handleSendException(e);
             } catch (MessengerIOException e) {
                 handleIOException(e);
             }
 
-            sendTextMessage(senderId, "Let's try another one :D!");
+            sender.sendTextMessage(senderId, "Let's try another one :D!");
         };
     }
 
@@ -226,7 +189,7 @@ public class CallBackHandler {
             logger.info("Received postback for user '{}' and page '{}' with payload '{}' at '{}'",
                 senderId, recipientId, payload, timestamp);
 
-            sendTextMessage(senderId, "Postback called");
+            sender.sendTextMessage(senderId, "Postback called");
         };
     }
 
@@ -255,7 +218,7 @@ public class CallBackHandler {
             logger.info("Received authentication for user '{}' and page '{}' with pass through param '{}' at '{}'",
                 senderId, recipientId, passThroughParam, timestamp);
 
-            sendTextMessage(senderId, "Authentication successful");
+            sender.sendTextMessage(senderId, "Authentication successful");
         };
     }
 
@@ -314,56 +277,6 @@ public class CallBackHandler {
             final String senderId = event.getSender().getId();
             logger.info("Received unsupported message from user '{}'", senderId);
         };
-    }
-
-    private void sendTextMessage(String recipientId, String text) {
-        try {
-            final Recipient recipient = Recipient.newBuilder().recipientId(recipientId).build();
-            final NotificationType notificationType = NotificationType.REGULAR;
-            final String metadata = "DEVELOPER_DEFINED_METADATA";
-
-            this.sendClient.sendTextMessage(recipient, notificationType, text, metadata);
-        } catch (MessengerApiException | MessengerIOException e) {
-            handleSendException(e);
-        }
-    }
-
-    @Scheduled(cron="0 0 7,11,14,17,20 * * *")
-    private void sendMoodMessage() {
-        database.getReference("users").orderByKey().addChildEventListener(new ChildEventListener() {
-            @Override
-            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                try {
-                    final Recipient recipient = Recipient.newBuilder().recipientId(dataSnapshot.getKey()).build();
-                    final NotificationType notificationType = NotificationType.REGULAR;
-                    final String metadata = "DEVELOPER_DEFINED_METADATA";
-
-                    sendClient.sendTextMessage(recipient, notificationType, "How are you feeling today?", metadata);
-                } catch (MessengerApiException | MessengerIOException e) {
-                    handleSendException(e);
-                }
-            }
-
-            @Override
-            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-
-            }
-
-            @Override
-            public void onChildRemoved(DataSnapshot dataSnapshot) {
-
-            }
-
-            @Override
-            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
     }
 
     private void handleSendException(Exception e) {
