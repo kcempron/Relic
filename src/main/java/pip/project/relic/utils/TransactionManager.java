@@ -5,6 +5,8 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import pip.project.relic.components.CommandKey;
@@ -12,6 +14,9 @@ import pip.project.relic.components.User;
 
 @Component
 public class TransactionManager {
+
+    private static final Logger logger = LoggerFactory.getLogger(TransactionManager.class);
+
 
     private final Sender sender;
     private final FirebaseDatabase database;
@@ -51,7 +56,11 @@ public class TransactionManager {
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.getValue() != null) {
                     user[0] = dataSnapshot.getValue(User.class);
+                    User testUser = dataSnapshot.getValue(User.class);
                     sender.sendTextMessage(senderId, "You're trying to get user data.");
+                    if (testUser == null) {
+                        logger.warn("user value is null!");
+                    }
                 }
             }
 
