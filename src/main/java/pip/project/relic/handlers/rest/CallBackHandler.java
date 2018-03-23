@@ -20,9 +20,13 @@ import java.util.List;
 import java.util.Date;
 
 import pip.project.relic.components.Command;
+import pip.project.relic.components.CommandKey;
+import pip.project.relic.components.User;
 import pip.project.relic.utils.Parser;
 import pip.project.relic.utils.Sender;
 import pip.project.relic.handlers.system.AuthHandler;
+import pip.project.relic.utils.SystemMapper;
+import pip.project.relic.utils.TransactionManager;
 
 @RestController
 @RequestMapping("/callback")
@@ -36,7 +40,8 @@ public class CallBackHandler {
     private final MessengerReceiveClient receiveClient;
 
     private final Sender sender;
-    private final AuthHandler authHandler;
+    private final TransactionManager transactionManager;
+    private final SystemMapper systemMapper;
 
     /**
      * Constructs the {@code CallBackHandler} and initializes the {@code MessengerReceiveClient}.
@@ -49,7 +54,8 @@ public class CallBackHandler {
     public CallBackHandler(@Value("${messenger4j.appSecret}") final String appSecret,
                            @Value("${messenger4j.verifyToken}") final String verifyToken,
                            final Sender sender,
-                           final AuthHandler authHandler) {
+                           final TransactionManager transactionManager,
+                           final SystemMapper systemMapper) {
 
         logger.debug("Initializing MessengerReceiveClient - appSecret: {} | verifyToken: {}", appSecret, verifyToken);
         this.receiveClient = MessengerPlatform.newReceiveClientBuilder(appSecret, verifyToken)
@@ -64,7 +70,8 @@ public class CallBackHandler {
             .fallbackEventHandler(newFallbackEventHandler())
             .build();
         this.sender = sender;
-        this.authHandler = authHandler;
+        this.transactionManager = transactionManager;
+        this.systemMapper = systemMapper;
     }
 
     /**
@@ -108,27 +115,41 @@ public class CallBackHandler {
 
     private TextMessageEventHandler newTextMessageEventHandler() {
         return event -> {
-            final String messageId = event.getMid();
             final String messageText = event.getText();
             final String senderId = event.getSender().getId();
-            final Date timestamp = event.getTimestamp();
 
             Command command = Parser.parseCommand(messageText);
+
+            User user = transactionManager.getUser(senderId);
+
+            if (user == null) {
+                sender.sendTextMessage(senderId, "You should create a new user by calling the \"new user:\" command!");
+                return;
+            }
+            if (transactionManager.lockExists(user)) {
+                if (transactionManager.verifyLock(user, command.getCommandKey())) {
+                    systemMapper.getHandler(command.getCommandKey()).handleResponse(senderId, command);
+                } else {
+                    transactionManager.sendLockResponse(user, command.getCommandKey());
+                }
+                return;
+            } else {
+                transactionManager.setLock(user, command.getCommandKey());
+            }
 
             try {
                 switch (command.getCommandKey()) {
 
                     case NEWUSER:
-                        sender.sendTextMessage(senderId, "You're registering as a new user");
-                        authHandler.verifyNewUser(senderId);
+                        systemMapper.getHandler(CommandKey.NEWUSER).handleRequest(senderId, command);
                         break;
 
                     case RESETUSER:
-                        sender.sendTextMessage(senderId, "You're welcome :) keep rocking");
+                        systemMapper.getHandler(CommandKey.RESETUSER).handleRequest(senderId, command);
                         break;
 
                     case MOOD:
-                        sender.sendTextMessage(senderId, "You're trying to send a mood message.");
+                        systemMapper.getHandler(CommandKey.MOOD).handleRequest(senderId, command);
                         break;
 
                     case THOUGHT:

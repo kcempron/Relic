@@ -11,10 +11,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import pip.project.relic.components.Command;
 import pip.project.relic.utils.Sender;
 
 @Component
-public class MoodHandler {
+public class MoodHandler extends Handler{
 
     private static final Logger logger = LoggerFactory.getLogger(MoodHandler.class);
 
@@ -25,6 +26,7 @@ public class MoodHandler {
     @Autowired
     public MoodHandler(Sender sender,
                        FirebaseDatabase database) {
+        super(sender, database);
         this.sender = sender;
         this.database = database;
     }
@@ -58,5 +60,15 @@ public class MoodHandler {
 
             }
         });
+    }
+
+    @Override
+    public void handleRequest(String userId, Command command) {
+        sender.sendTextMessage(userId, "You're trying to send a mood message.");
+    }
+
+    @Override
+    public void handleResponse(String userId, Command command) {
+        sender.sendTextMessage(userId, "Thanks for telling me how you're feeling.");
     }
 }
