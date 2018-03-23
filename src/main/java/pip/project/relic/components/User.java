@@ -53,4 +53,13 @@ public class User {
     public void setCommandLock(CommandKey commandLock) {
         this.commandLock = commandLock;
     }
+
+    @Override
+    public String toString() {
+        return "User{" +
+            "userId='" + userId + '\'' +
+            ", mood=" + mood +
+            ", commandLock=" + commandLock +
+            '}';
+    }
 }
