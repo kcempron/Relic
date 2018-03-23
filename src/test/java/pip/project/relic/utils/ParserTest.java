@@ -57,14 +57,18 @@ public class ParserTest {
     public void testInvalidCommand() {
         String messageText1 = "hello:";
         String messageText2 = "hello: " + dummyMessage;
+        String messageText3 = "mood:";
 
         Command command1 = Parser.parseCommand(messageText1);
         Command command2 = Parser.parseCommand(messageText2);
+        Command command3 = Parser.parseCommand(messageText3);
 
         assertEquals(CommandKey.DEFAULT, command1.getCommandKey());
         assertEquals(messageText1, command1.getValue());
         assertEquals(CommandKey.DEFAULT, command2.getCommandKey());
         assertEquals(messageText2, command2.getValue());
+        assertEquals(CommandKey.DEFAULT, command3.getCommandKey());
+        assertEquals(messageText3, command3.getValue());
     }
 
     @Test
