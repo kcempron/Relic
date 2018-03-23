@@ -37,12 +37,18 @@ public class TransactionManager {
 
     public void setLock(User user, CommandKey commandKey) {
         if (commandKey != CommandKey.DEFAULT) {
-            database.getReference("users").child(user.getUserId()).child("commandLock").setValueAsync(commandKey);
+            database.getReference("users")
+                .child(user.getUserId())
+                .child("commandLock")
+                .setValueAsync(commandKey);
         }
     }
 
     public void removeLock(User user) {
-        database.getReference("users").child(user.getUserId()).child("commandLock").setValueAsync(null);
+        database.getReference("users")
+            .child(user.getUserId())
+            .child("commandLock")
+            .setValueAsync(null);
     }
 
     public void sendLockResponse(User user, CommandKey commandKey) {
@@ -56,8 +62,6 @@ public class TransactionManager {
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.getValue() != null) {
                     user.setValues(dataSnapshot.getValue(User.class));
-                    sender.sendTextMessage(senderId, "You're trying to get user data.");
-                    logger.warn("user was never null!: " + user);
                 }
             }
 
@@ -67,6 +71,7 @@ public class TransactionManager {
             }
         });
 
+        logger.warn("user values: " + user);
         return user;
     }
 }
