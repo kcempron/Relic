@@ -50,14 +50,14 @@ public class TransactionManager {
     }
 
     public User getUser(String senderId) {
-        final User[] user = {null};
+        final User user = new User();
         database.getReference("users").child(senderId).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.getValue() != null) {
-                    user[0] = dataSnapshot.getValue(User.class);
+                    user.setValues(dataSnapshot.getValue(User.class));
                     sender.sendTextMessage(senderId, "You're trying to get user data.");
-                    logger.warn("user was never null!: " + user[0]);
+                    logger.warn("user was never null!: " + user);
                 }
             }
 
@@ -67,6 +67,6 @@ public class TransactionManager {
             }
         });
 
-        return user[0];
+        return user;
     }
 }
