@@ -120,7 +120,13 @@ public class CallBackHandler {
 
             Command command = Parser.parseCommand(messageText);
 
-            User user = transactionManager.getUser(senderId);
+            User user = null;
+            try {
+                user = transactionManager.getUser(senderId);
+            } catch (InterruptedException e) {
+                logger.error("user data retrieval was interrupted: " + e);
+                return;
+            }
 
             if (user == null) {
                 sender.sendTextMessage(senderId, "You should create a new user by calling the \"new user:\" command!");

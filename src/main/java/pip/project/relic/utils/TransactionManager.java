@@ -1,5 +1,7 @@
 package pip.project.relic.utils;
 
+import java.util.concurrent.Semaphore;
+
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
@@ -55,14 +57,16 @@ public class TransactionManager {
         sender.sendTextMessage(user.getUserId(), "You're currently engaged in a " + commandKey.getCommand() + " related conversion. Please complete it or break out using \"break:\".");
     }
 
-    public User getUser(String senderId) {
+    public User getUser(String senderId) throws InterruptedException {
         final User user = new User();
+
+        Semaphore semaphore = new Semaphore(0);
         database.getReference("users").child(senderId).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.getValue() != null) {
                     user.setValues(dataSnapshot.getValue(User.class));
-                    logger.warn("internal user values: " + user);
+                    semaphore.release();
                 }
             }
 
@@ -72,7 +76,7 @@ public class TransactionManager {
             }
         });
 
-        logger.warn("user values: " + user);
+        semaphore.acquire();
         return user;
     }
 }
