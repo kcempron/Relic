@@ -62,6 +62,7 @@ public class TransactionManager {
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.getValue() != null) {
                     user.setValues(dataSnapshot.getValue(User.class));
+                    logger.warn("internal user values: " + user);
                 }
             }
 
