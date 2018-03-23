@@ -56,9 +56,8 @@ public class TransactionManager {
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.getValue() != null) {
                     user[0] = dataSnapshot.getValue(User.class);
-                    User testUser = dataSnapshot.getValue(User.class);
                     sender.sendTextMessage(senderId, "You're trying to get user data.");
-                    logger.warn("user value is not null!: " + testUser);
+                    logger.warn("user value is not null!: " + user[0]);
                 }
             }
 
