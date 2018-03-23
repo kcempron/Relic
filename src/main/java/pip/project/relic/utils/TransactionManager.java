@@ -51,6 +51,7 @@ public class TransactionManager {
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.getValue() != null) {
                     user[0] = dataSnapshot.getValue(User.class);
+                    sender.sendTextMessage(senderId, "You've already registered as a user!");
                 }
             }
 

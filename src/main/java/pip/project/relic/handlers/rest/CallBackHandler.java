@@ -124,6 +124,9 @@ public class CallBackHandler {
 
             if (user == null) {
                 sender.sendTextMessage(senderId, "You should create a new user by calling the \"new user:\" command!");
+                if (command.getCommandKey() == CommandKey.NEWUSER) {
+                    systemMapper.getHandler(CommandKey.NEWUSER).handleRequest(senderId, command);
+                }
                 return;
             }
             if (transactionManager.lockExists(user)) {
