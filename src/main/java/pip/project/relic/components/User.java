@@ -30,12 +30,6 @@ public class User {
         this.commandLock = null;
     }
 
-    public void setValues(User user) {
-        this.userId = user.getUserId();
-        this.mood = user.getMood();
-        this.commandLock = user.getCommandLock();
-    }
-
     public String getUserId() {
         return userId;
     }

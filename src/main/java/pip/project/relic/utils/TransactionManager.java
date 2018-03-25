@@ -58,14 +58,14 @@ public class TransactionManager {
     }
 
     public User getUser(String senderId) throws InterruptedException {
-        final User user = new User();
+        final User[] user = {null};
 
         Semaphore semaphore = new Semaphore(0);
         database.getReference("users").child(senderId).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.getValue() != null) {
-                    user.setValues(dataSnapshot.getValue(User.class));
+                    user[0] = dataSnapshot.getValue(User.class);
                 }
                 semaphore.release();
             }
@@ -77,6 +77,6 @@ public class TransactionManager {
         });
 
         semaphore.acquire();
-        return user;
+        return user[0];
     }
 }
