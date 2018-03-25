@@ -53,8 +53,8 @@ public class TransactionManager {
             .setValueAsync(null);
     }
 
-    public void sendLockResponse(User user, CommandKey commandKey) {
-        sender.sendTextMessage(user.getUserId(), "You're currently engaged in a " + commandKey.getCommand() + " related conversion. Please complete it or break out using \"break:\".");
+    public void sendLockResponse(User user) {
+        sender.sendTextMessage(user.getUserId(), "You're currently engaged in a " + user.getCommandLock() + " related conversion. Please complete it or break out using \"break:\".");
     }
 
     public User getUser(String senderId) throws InterruptedException {
@@ -66,8 +66,8 @@ public class TransactionManager {
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.getValue() != null) {
                     user.setValues(dataSnapshot.getValue(User.class));
-                    semaphore.release();
                 }
+                semaphore.release();
             }
 
             @Override

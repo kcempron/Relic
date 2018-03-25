@@ -119,8 +119,8 @@ public class CallBackHandler {
             final String senderId = event.getSender().getId();
 
             Command command = Parser.parseCommand(messageText);
+            User user;
 
-            User user = null;
             try {
                 user = transactionManager.getUser(senderId);
             } catch (InterruptedException e) {
@@ -129,17 +129,19 @@ public class CallBackHandler {
             }
 
             if (user == null) {
-                sender.sendTextMessage(senderId, "You should create a new user by calling the \"new user:\" command!");
                 if (command.getCommandKey() == CommandKey.NEWUSER) {
-                    systemMapper.getHandler(CommandKey.NEWUSER).handleRequest(senderId, command);
+                    systemMapper.getHandler(CommandKey.NEWUSER).handleRequest(new User(senderId), command);
+                } else {
+                    sender.sendTextMessage(senderId, "You should create a new user by calling the \"new user:\" command!");
                 }
                 return;
             }
+
             if (transactionManager.lockExists(user)) {
                 if (transactionManager.verifyLock(user, command.getCommandKey())) {
-                    systemMapper.getHandler(command.getCommandKey()).handleResponse(senderId, command);
+                    systemMapper.getHandler(command.getCommandKey()).handleResponse(user, command);
                 } else {
-                    transactionManager.sendLockResponse(user, command.getCommandKey());
+                    transactionManager.sendLockResponse(user);
                 }
                 return;
             } else {
@@ -148,17 +150,16 @@ public class CallBackHandler {
 
             try {
                 switch (command.getCommandKey()) {
-
                     case NEWUSER:
-                        systemMapper.getHandler(CommandKey.NEWUSER).handleRequest(senderId, command);
+                        systemMapper.getHandler(CommandKey.NEWUSER).handleRequest(user, command);
                         break;
 
                     case RESETUSER:
-                        systemMapper.getHandler(CommandKey.RESETUSER).handleRequest(senderId, command);
+                        systemMapper.getHandler(CommandKey.RESETUSER).handleRequest(user, command);
                         break;
 
                     case MOOD:
-                        systemMapper.getHandler(CommandKey.MOOD).handleRequest(senderId, command);
+                        systemMapper.getHandler(CommandKey.MOOD).handleRequest(user, command);
                         break;
 
                     case THOUGHT:

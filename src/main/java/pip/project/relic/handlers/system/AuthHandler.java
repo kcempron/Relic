@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import pip.project.relic.components.Command;
 import pip.project.relic.utils.Sender;
 import pip.project.relic.components.User;
+import pip.project.relic.utils.TransactionManager;
 
 @Component
 public class AuthHandler extends Handler{
@@ -21,12 +22,16 @@ public class AuthHandler extends Handler{
 
     private final Sender sender;
     private final FirebaseDatabase database;
+    private final TransactionManager transactionManager;
 
     @Autowired
-    public AuthHandler(Sender sender, FirebaseDatabase database) {
-        super(sender, database);
+    public AuthHandler(Sender sender,
+                       FirebaseDatabase database,
+                       TransactionManager transactionManager) {
+        super(sender, database, transactionManager);
         this.sender = sender;
         this.database = database;
+        this.transactionManager = transactionManager;
     }
 
     private void verifyNewUser(String userId) {
@@ -50,11 +55,13 @@ public class AuthHandler extends Handler{
     }
 
     @Override
-    public void handleRequest(String userId, Command command) {
+    public void handleRequest(User user, Command command) {
+        String userId = user.getUserId();
         switch(command.getCommandKey()) {
             case NEWUSER:
                 sender.sendTextMessage(userId, "You're registering as a new user");
-                verifyNewUser(userId);
+                verifyNewUser(user.getUserId());
+                transactionManager.removeLock(user);
                 break;
 
             case RESETUSER:
@@ -62,14 +69,28 @@ public class AuthHandler extends Handler{
                 break;
 
             default:
-                logger.debug("User got to AuthHandler with: {}, {}", userId, command.getCommandKey());
+                logger.debug("User got to AuthHandler Request with: {}, {}", userId, command.getCommandKey());
                 break;
         }
     }
 
 
     @Override
-    public void handleResponse(String userId, Command command) {
-        sender.sendTextMessage(userId, "Thanks for authenticating.");
+    public void handleResponse(User user, Command command) {
+        sender.sendTextMessage(user.getUserId(), "Thanks for authenticating.");
+        String userId = user.getUserId();
+        switch(command.getCommandKey()) {
+            case NEWUSER:
+                sender.sendTextMessage(user.getUserId(), "Thanks for authenticating.");
+                break;
+
+            case RESETUSER:
+                sender.sendTextMessage(user.getUserId(), "Thanks for authenticating.");
+                break;
+
+            default:
+                logger.debug("User got to AuthHandler Response with: {}, {}", userId, command.getCommandKey());
+                break;
+        }
     }
 }

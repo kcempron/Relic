@@ -12,7 +12,9 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import pip.project.relic.components.Command;
+import pip.project.relic.components.User;
 import pip.project.relic.utils.Sender;
+import pip.project.relic.utils.TransactionManager;
 
 @Component
 public class MoodHandler extends Handler{
@@ -22,13 +24,16 @@ public class MoodHandler extends Handler{
 
     private final Sender sender;
     private final FirebaseDatabase database;
+    private final TransactionManager transactionManager;
 
     @Autowired
     public MoodHandler(Sender sender,
-                       FirebaseDatabase database) {
-        super(sender, database);
+                       FirebaseDatabase database,
+                       TransactionManager transactionManager) {
+        super(sender, database, transactionManager);
         this.sender = sender;
         this.database = database;
+        this.transactionManager = transactionManager;
     }
 
 
@@ -63,12 +68,31 @@ public class MoodHandler extends Handler{
     }
 
     @Override
-    public void handleRequest(String userId, Command command) {
-        sender.sendTextMessage(userId, "You're trying to send a mood message.");
+    public void handleRequest(User user, Command command) {
+        String userId = user.getUserId();
+        switch(command.getCommandKey()) {
+            case MOOD:
+                sender.sendTextMessage(user.getUserId(), "You're trying to send a mood message.");
+                break;
+
+            default:
+                logger.debug("User got to MoodHandler Request with: {}, {}", userId, command.getCommandKey());
+                break;
+        }
     }
 
     @Override
-    public void handleResponse(String userId, Command command) {
-        sender.sendTextMessage(userId, "Thanks for telling me how you're feeling.");
+    public void handleResponse(User user, Command command) {
+        String userId = user.getUserId();
+        switch(command.getCommandKey()) {
+            case MOOD:
+                sender.sendTextMessage(user.getUserId(), "Thanks for telling me how you're feeling.");
+                transactionManager.removeLock(user);
+                break;
+
+            default:
+                logger.debug("User got to MoodHandler Response with: {}, {}", userId, command.getCommandKey());
+                break;
+        }
     }
 }
