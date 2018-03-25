@@ -30,7 +30,7 @@ public class TransactionManager {
     }
 
     public boolean lockExists(User user) {
-        return user.getCommandLock() != null;
+        return user.getCommandLock() != null && user.getCommandLock() != CommandKey.DEFAULT;
     }
 
     public boolean verifyLock(User user, CommandKey commandKey) {
