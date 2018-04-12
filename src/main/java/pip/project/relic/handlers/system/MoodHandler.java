@@ -12,6 +12,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import pip.project.relic.components.Command;
+import pip.project.relic.components.CommandKey;
 import pip.project.relic.components.User;
 import pip.project.relic.utils.Sender;
 import pip.project.relic.utils.TransactionManager;
@@ -42,7 +43,11 @@ public class MoodHandler extends Handler{
         database.getReference("users").orderByKey().addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                sender.sendTextMessage(dataSnapshot.getKey(), "How are you feeling today?");
+                User user = dataSnapshot.getValue(User.class);
+                if (!transactionManager.lockExists(user)) {
+                    sender.sendTextMessage(user.getUserId(), "How are you feeling today?");
+                    transactionManager.setLock(user, CommandKey.MOOD);
+                }
             }
 
             @Override
