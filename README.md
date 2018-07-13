@@ -29,3 +29,5 @@ Records a user's thought at that given moment.
 ```
 Returns a list of workout routines for that given day.
 ```
+## Future Work
+I'm looking to add in a budgeting feature which can monitor ones regular expenditure and report week-over-week spending.
