@@ -1,11 +1,18 @@
 # Relic
+*[rel-ik]*
+
+**noun**
+
+something kept in remembrance; souvenir; memento.
+## Overview
 Project Relic is a facebook messenger bot that reacts to daily life activities.
 
 ## Commands
 Relic is capable of engaging in certain conversations by providing it with a message that starts with a specificed command tag followed by a `:`.
-> USER: "mood: I'm feeling good today!"
+### Example
+> USER: `"mood: I'm feeling good today!"`
 
-> RELIC: "You're trying to send a mood message."
+> RELIC: `"You're trying to send a mood message."`
 ### Usable Commands
 Currently, the following commands are recognizable:
 - "new user" **FUNCTIONAL**
